@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Shopping List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            padding: 5px 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        li.purchased {
+            text-decoration: line-through;
+            background-color: #d3ffd3;
+        }
+        button {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Shopping List</h1>
+    <div>
+        <input type="text" id="itemInput" placeholder="Enter an item">
+        <button id="addButton">Add</button>
+        <button id="clearButton">Clear List</button>
+    </div>
+    <ul id="shoppingList"></ul>
+
+    <script>
+        const itemInput = document.getElementById("itemInput");
+        const addButton = document.getElementById("addButton");
+        const clearButton = document.getElementById("clearButton");
+        const shoppingList = document.getElementById("shoppingList");
+
+        let items = JSON.parse(localStorage.getItem("shoppingList")) || [];
+
+        const saveToLocalStorage = () => {
+            localStorage.setItem("shoppingList", JSON.stringify(items));
+        };
+
+        const addToList = (text, purchased = false) => {
+            const li = document.createElement("li");
+            li.textContent = text;
+            if (purchased) li.classList.add("purchased");
+
+            const purchaseButton = document.createElement("button");
+            purchaseButton.textContent = purchased ? "Unmark" : "Mark Purchased";
+            purchaseButton.addEventListener("click", () => {
+                li.classList.toggle("purchased");
+                const isPurchased = li.classList.contains("purchased");
+                purchaseButton.textContent = isPurchased ? "Unmark" : "Mark Purchased";
+
+                const index = items.findIndex(item => item.text === text);
+                if (index !== -1) items[index].purchased = isPurchased;
+                saveToLocalStorage();
+            });
+
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Delete";
+            deleteButton.addEventListener("click", () => {
+                shoppingList.removeChild(li);
+                items = items.filter(item => item.text !== text);
+                saveToLocalStorage();
+            });
+
+            li.appendChild(purchaseButton);
+            li.appendChild(deleteButton);
+            shoppingList.appendChild(li);
+        };
+
+        const renderList = () => {
+            shoppingList.innerHTML = "";
+            items.forEach(item => addToList(item.text, item.purchased));
+        };
+
+        addButton.addEventListener("click", () => {
+            const text = itemInput.value.trim();
+            if (text) {
+                items.push({ text, purchased: false });
+                addToList(text);
+                saveToLocalStorage();
+                itemInput.value = "";
+            }
+        });
+
+        clearButton.addEventListener("click", () => {
+            items = [];
+            shoppingList.innerHTML = "";
+            saveToLocalStorage();
+        });
+
+        // Initial render
+        renderList();
+    </script>
+</body>
+</html>
